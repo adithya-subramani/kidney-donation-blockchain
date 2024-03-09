@@ -7,7 +7,7 @@ app = Flask(__name__)
 web3 = Web3(Web3.HTTPProvider('http://127.0.0.1:7545'))
 web3.eth.default_account = web3.eth.accounts[0]
 
-contract_json_path = 'build/contracts/DonorContract.json'
+contract_json_path = 'build/contracts/KidneyDonorRegistry.json'
 
 with open(contract_json_path, 'r') as json_file:
     contract_data = json.load(json_file)
@@ -23,6 +23,24 @@ contract = web3.eth.contract(address=contract_address, abi=contract_abi)
 @app.route('/')
 def index():
     return "Good to go" if web3.is_connected() else "Problem"
+
+@app.route('/transplant-record-insert', methods=['POST'])
+def insert_transplant_record():
+    
+    _id = int(request.form['id'])
+    _donor_id = int(request.form['donor_id'])
+    _hospital_id = int(request.form['hospital_id'])
+    _date_of_transplant = int(request.form['date_of_transplant'])
+    _doctor_id = int(request.form['doctor_id'])
+    _donor_type = int(request.form['donor_type'])
+
+    
+    try:
+        
+        contract.functions.addDonor(_id, _donor_id, _hospital_id, _date_of_transplant, _doctor_id, _donor_type).transact()
+        return jsonify({'message': 'Transplant record inserted successfully!'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
 
 
 @app.route('/register', methods=['POST'])
