@@ -10,6 +10,7 @@ contract DonorContract {
         string medical_id;
         string blood_type;
         string organ;
+        uint transplant_status;
         uint weight;
         uint height;
     }
@@ -22,6 +23,7 @@ contract DonorContract {
         string medical_id;
         string blood_type;
         string organ;
+        uint transplant_status;
         uint weight;
         uint height;
     }
@@ -34,16 +36,31 @@ contract DonorContract {
         string medical_id;
         string blood_type;
         string organ;
+        uint transplant_status;
         uint weight;
         uint height;
     }
+
+    struct TransplantRecord {
+        uint transplant_id;
+        string donor_id;
+        string patient_id;
+        string organ;
+        uint donor_type;
+        uint timestamp;
+    }
+
+
     mapping ( string =>pledged ) pledgedMap;
     mapping ( string =>donor ) donorMap;
     mapping ( string =>patient) patientMap;
+    mapping (uint => TransplantRecord) public transplantRecords;
 
     string[] PledgedArray;
     string[] DonorsArray;
     string[] PatientsArray;
+    uint[] TransplantsArray;
+    uint public transplantRecordCount;
 
     function setPledge(string memory _fullname, uint _age, string memory _gender, string memory _medical_id,
                        string memory _blood_type, string memory _organ, uint _weight, uint _height)
@@ -138,10 +155,34 @@ contract DonorContract {
         );
     }
 
+    function addTransplantRecord(string memory _donorMedicalId, string memory _patientMedicalId, string memory _organ,uint _donor_type)
+        public
+    {
+        require(validateDonor(_donorMedicalId), "Invalid donor medical ID");
+        require(validatePatient(_patientMedicalId), "Invalid patient medical ID");
+
+        uint timestamp = block.timestamp;
+
+        transplantRecords[transplantRecordCount] = TransplantRecord({
+            transplant_id: transplantRecordCount,
+            donor_id: _donorMedicalId,
+            patient_id: _patientMedicalId,
+            organ: _organ,
+            donor_type: _donor_type,
+            timestamp: timestamp
+        });
+
+        donorMap[_donorMedicalId].transplant_status = 1;
+        patientMap[_patientMedicalId].transplant_status = 1;
+
+        TransplantsArray.push(transplantRecordCount);
+        transplantRecordCount++;
+    }
+
     function validatePledge(string memory _medical_id) view public returns(bool)
     {
 
-     if (keccak256(abi.encodePacked((pledgedMap[_medical_id].medical_id))) == keccak256(abi.encodePacked(_medical_id)))
+     if ((keccak256(abi.encodePacked((pledgedMap[_medical_id].medical_id))) == keccak256(abi.encodePacked(_medical_id))) && pledgedMap[_medical_id].transplant_status != 1)
         return true;
      else return false;
 
@@ -150,7 +191,7 @@ contract DonorContract {
     function validateDonor(string memory _medical_id) view public returns(bool)
     {
 
-     if (keccak256(abi.encodePacked((donorMap[_medical_id].medical_id))) == keccak256(abi.encodePacked(_medical_id)))
+     if ((keccak256(abi.encodePacked((donorMap[_medical_id].medical_id))) == keccak256(abi.encodePacked(_medical_id))) && donorMap[_medical_id].transplant_status != 1)
         return true;
      else return false;
 
@@ -159,7 +200,7 @@ contract DonorContract {
     function validatePatient(string memory _medical_id) view public returns(bool)
     {
 
-     if (keccak256(abi.encodePacked((patientMap[_medical_id].medical_id))) == keccak256(abi.encodePacked(_medical_id)))
+     if ((keccak256(abi.encodePacked((patientMap[_medical_id].medical_id))) == keccak256(abi.encodePacked(_medical_id))) && patientMap[_medical_id].transplant_status != 1)
         return true;
      else return false;
 

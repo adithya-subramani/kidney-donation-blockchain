@@ -24,6 +24,20 @@ contract = web3.eth.contract(address=contract_address, abi=contract_abi)
 def index():
     return "Good to go" if web3.is_connected() else "Problem"
 
+@app.route('/transplant_record_insert', methods=['POST'])
+def insert_transplant_record():
+    # _id = request.form['id']
+    _donor_id = request.form['donor_id']
+    _patient_id = request.form['patient_id']
+    _organ = request.form['organ']
+    _donor_type = int(request.form['donor_type'])
+
+    try:
+        contract.functions.addTransplantRecord(_donor_id,_patient_id,_organ, _donor_type).transact()
+        return jsonify({'message': 'Transplant record inserted successfully!'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
+
 
 @app.route('/register', methods=['POST'])
 def register():
